@@ -1,0 +1,20 @@
+{% extends "common/layout.html" %}
+
+{% block title %}Mes candidatures{% endblock %}
+
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">Mes candidatures envoyées</h2>
+
+<div class="space-y-4">
+    {% for app in applications %}
+    <div class="bg-white p-4 rounded shadow">
+        <h3 class="text-lg font-semibold">{{ app.job.title }}</h3>
+        <p class="text-gray-600">Entreprise : {{ app.job.company }}</p>
+        <p class="text-sm text-gray-400">Envoyée le {{ app.created_at.strftime('%d/%m/%Y') }}</p>
+        <span class="text-sm mt-2 inline-block bg-gray-200 text-gray-800 px-2 py-1 rounded">{{ app.status }}</span>
+    </div>
+    {% else %}
+    <p class="text-gray-500">Vous n'avez pas encore postulé à une offre.</p>
+    {% endfor %}
+</div>
+{% endblock %}
