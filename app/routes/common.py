@@ -2,20 +2,18 @@ from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import current_user, login_required
 from ..models.notification import Notification
 
-common = Blueprint('common', __name__)
+common_bp = Blueprint('common', __name__)
 
-@common.route('/')
+@common_bp.route('/')
 def index():
-    """Landing page route."""
     if current_user.is_authenticated:
         if current_user.is_recruiter():
             return redirect(url_for('recruiter.dashboard'))
-        else:
+        elif current_user.is_candidate():
             return redirect(url_for('candidate.dashboard'))
-    
     return render_template('index.html')
 
-@common.route('/notifications')
+@common_bp.route('/notifications')
 @login_required
 def notifications():
     """User notifications route."""
@@ -29,7 +27,7 @@ def notifications():
         notifications=notifications
     )
 
-@common.route('/notifications/mark-read/<int:notification_id>', methods=['POST'])
+@common_bp.route('/notifications/mark-read/<int:notification_id>', methods=['POST'])
 @login_required
 def mark_notification_read(notification_id):
     """Mark notification as read."""
@@ -54,7 +52,7 @@ def mark_notification_read(notification_id):
     
     return redirect(url_for('common.notifications'))
 
-@common.route('/notifications/mark-all-read', methods=['POST'])
+@common_bp.route('/notifications/mark-all-read', methods=['POST'])
 @login_required
 def mark_all_notifications_read():
     """Mark all notifications as read."""
@@ -79,22 +77,22 @@ def mark_all_notifications_read():
     
     return redirect(url_for('common.notifications'))
 
-@common.route('/about')
+@common_bp.route('/about')
 def about():
     """About page route."""
     return render_template('common/about.html')
 
-@common.route('/contact')
+@common_bp.route('/contact')
 def contact():
     """Contact page route."""
     return render_template('common/contact.html')
 
-@common.route('/privacy-policy')
+@common_bp.route('/privacy-policy')
 def privacy_policy():
     """Privacy policy page route."""
     return render_template('common/privacy_policy.html')
 
-@common.route('/terms-of-service')
+@common_bp.route('/terms-of-service')
 def terms_of_service():
     """Terms of service page route."""
     return render_template('common/terms_of_service.html')

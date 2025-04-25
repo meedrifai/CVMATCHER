@@ -3,7 +3,7 @@
 {% block title %}Dashboard Recruteur{% endblock %}
 
 {% block content %}
-<h2 class="text-2xl font-bold mb-6">Bienvenue {{ user.name }}</h2>
+<h2 class="text-2xl font-bold mb-6">Bienvenue {{ current_user.first_name }} {{ current_user.last_name }}</h2>
 
 {% include "common/notifications.html" %}
 

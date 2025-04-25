@@ -2,7 +2,7 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
-from .. import db, login_manager
+from app.extensions import db, login_manager
 
 class User(UserMixin, db.Model):
     """User model for both recruiters and candidates."""
@@ -20,7 +20,7 @@ class User(UserMixin, db.Model):
     
     # Relationships
     job_offers = db.relationship('JobOffer', backref='creator', lazy='dynamic')
-    applications = db.relationship('Application', backref='applicant', lazy='dynamic')
+    applications = db.relationship('Application', backref='applicant', lazy=True)
     notifications = db.relationship('Notification', backref='recipient', lazy='dynamic')
     
     def __init__(self, **kwargs):

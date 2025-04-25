@@ -1,12 +1,12 @@
 from flask import Blueprint, render_template, redirect, request, url_for, flash
 from flask_login import login_required, current_user
-from ..models.job import Job
+from ..models.job import JobOffer
 from ..models.application import Application
 from ..services.cv_matching_service import CVMatchingService
 
-recruiter = Blueprint('recruiter', __name__)
+recruiter_bp = Blueprint('recruiter', __name__)
 
-@recruiter.route('/dashboard')
+@recruiter_bp.route('/dashboard')
 @login_required
 def dashboard():
     """Recruiter dashboard route."""
@@ -15,7 +15,7 @@ def dashboard():
         return redirect(url_for('common.index'))
     
     # Get recruiter's jobs
-    jobs = Job.query.filter_by(recruiter_id=current_user.id).all()
+    jobs = JobOffer.query.filter_by(recruiter_id=current_user.id).all()
     
     # Get applications count for each job
     job_stats = {}
@@ -31,7 +31,7 @@ def dashboard():
         job_stats=job_stats
     )
 
-@recruiter.route('/post-job', methods=['GET', 'POST'])
+@recruiter_bp.route('/post-job', methods=['GET', 'POST'])
 @login_required
 def post_job():
     """Post new job route."""
@@ -53,7 +53,7 @@ def post_job():
             return render_template('recruiter/post_job.html')
         
         # Create new job
-        job = Job(
+        job = JobOffer(
             title=title,
             company=company,
             location=location,
@@ -77,7 +77,7 @@ def post_job():
     
     return render_template('recruiter/post_job.html')
 
-@recruiter.route('/jobs/<int:job_id>/edit', methods=['GET', 'POST'])
+@recruiter_bp.route('/jobs/<int:job_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_job(job_id):
     """Edit job route."""
@@ -86,7 +86,7 @@ def edit_job(job_id):
         return redirect(url_for('common.index'))
     
     # Get job
-    job = Job.query.get_or_404(job_id)
+    job = JobOffer.query.get_or_404(job_id)
     
     # Ensure job belongs to recruiter
     if job.recruiter_id != current_user.id:
@@ -114,7 +114,7 @@ def edit_job(job_id):
     
     return render_template('recruiter/edit_job.html', job=job)
 
-@recruiter.route('/jobs/<int:job_id>/applications')
+@recruiter_bp.route('/jobs/<int:job_id>/applications')
 @login_required
 def view_applications(job_id):
     """View job applications route."""
@@ -123,7 +123,7 @@ def view_applications(job_id):
         return redirect(url_for('common.index'))
     
     # Get job
-    job = Job.query.get_or_404(job_id)
+    job = JobOffer.query.get_or_404(job_id)
     
     # Ensure job belongs to recruiter
     if job.recruiter_id != current_user.id:
@@ -146,7 +146,7 @@ def view_applications(job_id):
         application_scores=application_scores
     )
 
-@recruiter.route('/applications/<int:application_id>/update-status', methods=['POST'])
+@recruiter_bp.route('/applications/<int:application_id>/update-status', methods=['POST'])
 @login_required
 def update_application_status(application_id):
     """Update application status route."""
@@ -158,7 +158,7 @@ def update_application_status(application_id):
     application = Application.query.get_or_404(application_id)
     
     # Get job to ensure it belongs to recruiter
-    job = Job.query.get_or_404(application.job_id)
+    job = JobOffer.query.get_or_404(application.job_id)
     
     # Ensure job belongs to recruiter
     if job.recruiter_id != current_user.id:
@@ -195,7 +195,7 @@ def update_application_status(application_id):
     
     return redirect(url_for('recruiter.view_applications', job_id=application.job_id))
 
-@recruiter.route('/jobs/<int:job_id>/toggle-status', methods=['POST'])
+@recruiter_bp.route('/jobs/<int:job_id>/toggle-status', methods=['POST'])
 @login_required
 def toggle_job_status(job_id):
     """Toggle job active status."""
@@ -204,7 +204,7 @@ def toggle_job_status(job_id):
         return redirect(url_for('common.index'))
     
     # Get job
-    job = Job.query.get_or_404(job_id)
+    job = JobOffer.query.get_or_404(job_id)
     
     # Ensure job belongs to recruiter
     if job.recruiter_id != current_user.id:
@@ -226,3 +226,4 @@ def toggle_job_status(job_id):
         flash(f'Error updating job status: {str(e)}', 'danger')
     
     return redirect(url_for('recruiter.dashboard'))
+

@@ -27,6 +27,7 @@ class Application(db.Model):
             'job_id': self.job_id,
             'applicant_id': self.applicant_id,
             'resume_path': self.resume_path,
+            'resume_text': self.resume_text,
             'cover_letter': self.cover_letter,
             'match_percentage': self.match_percentage,
             'status': self.status,

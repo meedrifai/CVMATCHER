@@ -1,135 +1,69 @@
-from flask import Blueprint, render_template, redirect, request, url_for, flash, session
-from flask_login import login_user, logout_user, login_required, current_user
-from ..services.auth_service import AuthService
-from ..models.user import User
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CV Matcher{% endblock %}</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Styles personnalisés -->
+    <style>
+        /* Styles personnalisés si nécessaire */
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-indigo-600 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{{ url_for('common.index') }}" class="text-xl font-bold">CV Matcher</a>
+            <div class="space-x-4">
+                {% if current_user.is_authenticated %}
+                    {% if current_user.is_recruiter() %}
+                        <a href="{{ url_for('recruiter.dashboard') }}" class="hover:text-indigo-200">Tableau de bord</a>
+                    {% else %}
+                        <a href="{{ url_for('candidate.dashboard') }}" class="hover:text-indigo-200">Tableau de bord</a>
+                    {% endif %}
+                    <a href="{{ url_for('auth.profile') }}" class="hover:text-indigo-200">Profil</a>
+                    <a href="{{ url_for('auth.logout') }}" class="hover:text-indigo-200">Déconnexion</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="hover:text-indigo-200">Connexion</a>
+                    <a href="{{ url_for('auth.register') }}" class="hover:text-indigo-200">Inscription</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
 
-auth = Blueprint('auth', __name__)
+    <!-- Messages flash -->
+    <div class="container mx-auto mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="p-4 mb-4 rounded 
+                        {% if category == 'success' %}bg-green-100 text-green-800{% elif category == 'danger' %}bg-red-100 text-red-800{% elif category == 'info' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
 
-@auth.route('/register', methods=['GET', 'POST'])
-def register():
-    """User registration route."""
-    if current_user.is_authenticated:
-        if current_user.is_recruiter():
-            return redirect(url_for('recruiter.dashboard'))
-        else:
-            return redirect(url_for('candidate.dashboard'))
-    
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-        role = request.form.get('role')
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        
-        # Basic validation
-        if not username or not email or not password or not role:
-            flash('All fields are required')
-            return render_template('auth/register.html')
-        
-        if password != confirm_password:
-            flash('Passwords do not match')
-            return render_template('auth/register.html')
-        
-        # Register user
-        success, message = AuthService.register_user(
-            username, email, password, role, first_name, last_name
-        )
-        
-        if success:
-            flash(message, 'success')
-            return redirect(url_for('auth.login'))
-        else:
-            flash(message, 'danger')
-    
-    return render_template('auth/register.html')
+    <!-- Contenu principal -->
+    <main class="container mx-auto py-8 px-4">
+        {% block content %}{% endblock %}
+    </main>
 
-@auth.route('/login', methods=['GET', 'POST'])
-def login():
-    """User login route."""
-    if current_user.is_authenticated:
-        if current_user.is_recruiter():
-            return redirect(url_for('recruiter.dashboard'))
-        else:
-            return redirect(url_for('candidate.dashboard'))
-    
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        remember = True if request.form.get('remember') else False
-        
-        # Authenticate user
-        success, user = AuthService.authenticate_user(username, password)
-        
-        if success:
-            # Log in user
-            login_user(user, remember=remember)
-            
-            # Redirect based on role
-            if user.is_recruiter():
-                return redirect(url_for('recruiter.dashboard'))
-            else:
-                return redirect(url_for('candidate.dashboard'))
-        else:
-            flash('Invalid username or password', 'danger')
-    
-    return render_template('auth/login.html')
+    <!-- Footer -->
+    <footer class="bg-gray-100 p-6 mt-auto">
+        <div class="container mx-auto text-center text-gray-600">
+            <p>&copy; 2025 CV Matcher - Tous droits réservés</p>
+        </div>
+    </footer>
 
-@auth.route('/logout')
-@login_required
-def logout():
-    """User logout route."""
-    logout_user()
-    flash('You have been logged out.', 'info')
-    return redirect(url_for('auth.login'))
-
-@auth.route('/profile', methods=['GET', 'POST'])
-@login_required
-def profile():
-    """User profile route."""
-    if request.method == 'POST':
-        # Update profile
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        email = request.form.get('email')
-        
-        current_user.first_name = first_name
-        current_user.last_name = last_name
-        current_user.email = email
-        
-        try:
-            from .. import db
-            db.session.commit()
-            flash('Profile updated successfully', 'success')
-        except Exception as e:
-            from .. import db
-            db.session.rollback()
-            flash(f'Error updating profile: {str(e)}', 'danger')
-    
-    return render_template('auth/profile.html')
-
-@auth.route('/change-password', methods=['GET', 'POST'])
-@login_required
-def change_password():
-    """Change password route."""
-    if request.method == 'POST':
-        current_password = request.form.get('current_password')
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-        
-        if new_password != confirm_password:
-            flash('New passwords do not match', 'danger')
-            return render_template('auth/change_password.html')
-        
-        success, message = AuthService.change_password(
-            current_user.id, current_password, new_password
-        )
-        
-        if success:
-            flash(message, 'success')
-            return redirect(url_for('auth.profile'))
-        else:
-            flash(message, 'danger')
-    
-    return render_template('auth/change_password.html')
+    <!-- Scripts JavaScript -->
+    <script>
+        // Scripts globaux si nécessaire
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
